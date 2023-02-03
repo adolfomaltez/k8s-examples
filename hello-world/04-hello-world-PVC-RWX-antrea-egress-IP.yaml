@@ -1,0 +1,135 @@
+#
+# Example: Hello World + PVC Longhorn RWX (Read/Write Many) + Antrea EgressIP.
+# Create the PVC Longhorn RWX..
+# Create the Deployment 2 pod + 1 PVC RWX on Longhorn.
+# Create the Service
+# Create the Nginx Ingress hello.mylab.net
+# Create the External IP Pool
+# Create the Egress IP
+#
+
+
+---
+# PVC RWX
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hello-pv-claim
+spec:
+  storageClassName: longhorn
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: hello-world
+  name: hello-world
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hello-world
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: hello-world
+    spec:
+      restartPolicy: Always
+      containers:
+      - image: rancher/hello-world
+        imagePullPolicy: Always
+        name: hello-world
+        ports:
+        - containerPort: 80
+          protocol: TCP
+          name: http
+        volumeMounts:
+          - mountPath: /var/data
+            name: hello-pv-storage
+      volumes:
+        - name: hello-pv-storage
+          persistentVolumeClaim:
+            claimName: hello-pv-claim
+
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-world
+  namespace: default
+spec:
+  ports:
+  - port: 80
+    name: http
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: hello-world
+
+---
+# Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-ingress
+  namespace: default
+spec:
+  rules:
+  - host: hello.mylab.net
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: hello-world
+            port:
+              number: 80
+
+---
+# External IP Pool
+apiVersion: crd.antrea.io/v1alpha2
+kind: ExternalIPPool
+metadata:
+  name: prod-external-ip-pool
+spec:
+  ipRanges:
+  - start: 10.10.236.40
+    end: 10.10.236.100
+  - cidr: 10.10.236.0/23
+  nodeSelector: {}
+#    matchLabels:
+#    network-role: egress-gateway
+
+---
+# Egress
+apiVersion: crd.antrea.io/v1alpha2
+kind: Egress
+metadata:
+  name: egress-prod-hello
+spec:
+  appliedTo:
+#    namespaceSelector:
+#      matchLabels:
+#        env: prod
+    podSelector:
+      matchLabels:
+        app: hello-world
+  egressIP: 10.10.236.40
+  externalIPPool: prod-external-ip-pool
+#status:
+#  egressNode: node01
