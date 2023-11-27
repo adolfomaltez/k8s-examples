@@ -43,6 +43,7 @@ QUIT
 
 
 # References
+- [Deploying Sql Server Always On Availability Group on Kubernetes](https://pradeepl.com/blog/kubernetes/deploying-sql-server-on-kubernetes/)
 - [Microsoft: Quickstart: Run SQL Server Linux container images with Docker](https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker?view=sql-server-ver16&pivots=cs1-bash)
 - [Microsoft: Deploy SQL Server Linux containers on Kubernetes with StatefulSets](https://learn.microsoft.com/en-us/sql/linux/sql-server-linux-kubernetes-best-practices-statefulsets?view=sql-server-ver16)
 - [Microsoft: Quickstart: Install SQL Server and create a database on Ubuntu](https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-ubuntu?view=sql-server-ver16&tabs=ubuntu2004)
