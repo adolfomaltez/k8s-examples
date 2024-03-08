@@ -15,7 +15,7 @@ metadata:
   name: hello-world
   namespace: default
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: hello-world
@@ -28,6 +28,7 @@ spec:
     metadata:
       labels:
         app: hello-world
+        team: rocket
     spec:
       restartPolicy: Always
       containers:
@@ -47,6 +48,9 @@ metadata:
   name: hello-world
   namespace: default
 spec:
+  type: ClusterIP
+  externalIPs:
+    - 192.168.31.101
   ports:
   - port: 80
     name: http
@@ -55,22 +59,22 @@ spec:
   selector:
     app: hello-world
 
----
-# Ingress
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: hello-ingress
-  namespace: default
-spec:
-  rules:
-  - host: hello.mylab.net
-    http:
-      paths:
-      - pathType: Prefix
-        path: "/"
-        backend:
-          service:
-            name: hello-world
-            port:
-              number: 80
+#---
+## Ingress
+#apiVersion: networking.k8s.io/v1
+#kind: Ingress
+#metadata:
+#  name: hello-ingress
+#  namespace: default
+#spec:
+#  rules:
+#  - host: hello.mylab.net
+#    http:
+#      paths:
+#      - pathType: Prefix
+#        path: "/"
+#        backend:
+#          service:
+#            name: hello-world
+#            port:
+#              number: 80

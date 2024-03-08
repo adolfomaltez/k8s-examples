@@ -1,8 +1,9 @@
 #
-# Example: Hello World App.
-# Create the Deployment only 1 pod.
+# Example: Hello World.
+# Create the Deployment 3 pods.
 # Create the Service
-# Create the Nginx Ingress hello.private-ip.sslip.io
+# Create the Nginx Ingress hello.192-168-31-101.sslip.io
+# Create the Antrea EgressIP 192.168.31.101 
 #
 
 ---
@@ -15,7 +16,7 @@ metadata:
   name: hello-world
   namespace: default
 spec:
-  replicas: 6
+  replicas: 3
   selector:
     matchLabels:
       app: hello-world
@@ -28,6 +29,7 @@ spec:
     metadata:
       labels:
         app: hello-world
+        team: rocket
     spec:
       restartPolicy: Always
       containers:
@@ -55,7 +57,6 @@ spec:
   selector:
     app: hello-world
 
-
 ---
 # Ingress
 apiVersion: networking.k8s.io/v1
@@ -65,7 +66,7 @@ metadata:
   namespace: default
 spec:
   rules:
-  - host: hello.192-168-145-131.sslip.io
+  - host: hello.192-168-31-101.sslip.io
     http:
       paths:
       - pathType: Prefix
@@ -77,22 +78,22 @@ spec:
               number: 80
 
 ---
-# External IP Pool
+# External IP Pool (Antrea CNI)
 apiVersion: crd.antrea.io/v1alpha2
 kind: ExternalIPPool
 metadata:
   name: prod-external-ip-pool
 spec:
   ipRanges:
-  - start: 192.168.145.130
-    end: 192.168.145.250
-  - cidr: 192.168.145.128/25
+  - start: 192.168.31.100
+    end: 192.168.31.150
+  - cidr: 192.168.31.0/24
   nodeSelector: {}
 #    matchLabels:
 #    network-role: egress-gateway
 
 ---
-# Egress
+# Egress (Antrea CNI)
 apiVersion: crd.antrea.io/v1alpha2
 kind: Egress
 metadata:
@@ -105,7 +106,7 @@ spec:
     podSelector:
       matchLabels:
         app: hello-world
-  egressIP: 192.168.145.131
+  egressIP: 192.168.31.101
   externalIPPool: prod-external-ip-pool
 #status:
 #  egressNode: node01
