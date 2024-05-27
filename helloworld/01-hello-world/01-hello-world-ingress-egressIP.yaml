@@ -14,7 +14,7 @@ metadata:
   labels:
     app: hello-world
   name: hello-world
-  namespace: default
+#  namespace: prod
 spec:
   replicas: 3
   selector:
@@ -47,7 +47,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: hello-world
-  namespace: default
+#  namespace: prod
 spec:
   ports:
   - port: 80
@@ -63,7 +63,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: hello-ingress
-  namespace: default
+#  namespace: prod
 spec:
   rules:
   - host: hello.192-168-31-101.sslip.io
@@ -79,34 +79,34 @@ spec:
 
 ---
 # External IP Pool (Antrea CNI)
-apiVersion: crd.antrea.io/v1alpha2
+apiVersion: crd.antrea.io/v1beta1
 kind: ExternalIPPool
 metadata:
   name: prod-external-ip-pool
+#  namespace: prod
 spec:
   ipRanges:
-  - start: 192.168.31.100
-    end: 192.168.31.150
-  - cidr: 192.168.31.0/24
+  - start: 172.18.0.100
+    end: 172.18.0.150
+  - cidr: 172.18.0.0/24
   nodeSelector: {}
 #    matchLabels:
 #    network-role: egress-gateway
 
 ---
 # Egress (Antrea CNI)
-apiVersion: crd.antrea.io/v1alpha2
+apiVersion: crd.antrea.io/v1beta1
 kind: Egress
 metadata:
   name: egress-prod-hello
+#  namespace: prod
 spec:
   appliedTo:
-#    namespaceSelector:
-#      matchLabels:
-#        env: prod
     podSelector:
       matchLabels:
         app: hello-world
-  egressIP: 192.168.31.101
+        #team: rocket
+  egressIP: 172.18.0.104
   externalIPPool: prod-external-ip-pool
 #status:
 #  egressNode: node01
