@@ -1,0 +1,133 @@
+
+# Example: Hello World App with AntreaLB different L3 network
+# MetalLB IPAddressPool
+# MetalLB L2Advertisement
+# Deployment with 3 pods
+# Service type LoadBalancer
+# Antrea External IP Pool
+# Antrea Egress
+
+
+
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: hello-world
+  name: hello-world
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hello-world
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: hello-world
+    spec:
+      restartPolicy: Always
+      containers:
+      - image: rancher/hello-world
+        imagePullPolicy: Always
+        name: hello-world
+        ports:
+        - containerPort: 80
+          protocol: TCP
+          name: http
+
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-world
+  namespace: default
+  annotations:
+    service.antrea.io/external-ip-pool: "hello-world"
+spec:
+  selector:
+    app: hello-world
+  loadBalancerIP: "10.10.235.33"
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
+
+---
+# ExternalIPPool
+apiVersion: crd.antrea.io/v1beta1
+kind: ExternalIPPool
+metadata:
+  name: hello-world
+spec:
+  ipRanges:
+  - start: 10.10.235.33
+    end: 10.10.235.39
+  nodeSelector:
+    matchLabels:
+      node-role.kubernetes.io/worker: "worker"
+      kubernetes.io/hostname: "worker-node02"
+
+---
+# Antrea Egress
+apiVersion: crd.antrea.io/v1beta1
+kind: Egress
+metadata:
+  name: hello-world
+spec:
+  appliedTo:
+    podSelector:
+      matchLabels:
+        app: hello-world
+  egressIP: 10.10.235.34
+  externalIPPool: hello-world
+
+---
+# FRR configuration for Service LoadBalancer
+apiVersion: frrk8s.metallb.io/v1beta1
+kind: FRRConfiguration
+metadata:
+  name: frr-hello-service
+spec:
+  bgp:
+    routers:
+    - asn: 64500
+      neighbors:
+      - address: 10.63.16.2
+        asn: 64500
+        toAdvertise:
+          allowed:
+            mode: all
+      prefixes:
+        - 10.10.235.33/32
+
+---
+# FRR configuration for Egress
+apiVersion: frrk8s.metallb.io/v1beta1
+kind: FRRConfiguration
+metadata:
+  name: worker-node02-egress
+spec:
+  bgp:
+    routers:
+    - asn: 64500
+      neighbors:
+      - address: 10.63.16.2
+        asn: 64500
+        toAdvertise:
+          allowed:
+            mode: all
+      prefixes:
+        - 10.10.235.34/32
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/hostname: "worker-node02"

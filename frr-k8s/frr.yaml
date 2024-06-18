@@ -1,0 +1,20 @@
+apiVersion: frrk8s.metallb.io/v1beta1
+kind: FRRConfiguration
+metadata:
+  name: routerupstream
+  namespace: frr
+spec:
+  bgp:
+    routers:
+    - asn: 64500
+      neighbors:
+      - address: 10.63.16.2
+        asn: 64500
+        toAdvertise:
+          allowed:
+            mode: all
+      #prefixes:
+      #  - 10.10.235.33/32
+  nodeSelector:
+    matchLabels:
+      node-role.kubernetes.io/worker: "worker"
