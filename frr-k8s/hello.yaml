@@ -1,12 +1,11 @@
 
-# Example: Hello World App with AntreaLB different L3 network
-# MetalLB IPAddressPool
-# MetalLB L2Advertisement
-# Deployment with 3 pods
-# Service type LoadBalancer
-# Antrea External IP Pool
+# Example: Hello World App with AntreaLB/EgressIP different L3 network via BGP
+# Deployment hello with 3x pods
+# Service type LoadBalancer (Antrea)
+# Antrea External IP Pool (on a specific node)
 # Antrea Egress
-
+# FRR config for LoadBalancer (all worker nodes)
+# FRR config for EgressIP (worker-ode02)
 
 
 ---
@@ -44,7 +43,7 @@ spec:
           name: http
 
 ---
-# Service
+# Service type LoadBalancer (Antrea)
 apiVersion: v1
 kind: Service
 metadata:
@@ -63,7 +62,7 @@ spec:
   type: LoadBalancer
 
 ---
-# ExternalIPPool
+# Antrea ExternalIPPool (Differente L3 subnet)
 apiVersion: crd.antrea.io/v1beta1
 kind: ExternalIPPool
 metadata:
@@ -111,7 +110,7 @@ spec:
         - 10.10.235.33/32
 
 ---
-# FRR configuration for Egress
+# FRR configuration for EgressIP (only for worker-node02)
 apiVersion: frrk8s.metallb.io/v1beta1
 kind: FRRConfiguration
 metadata:

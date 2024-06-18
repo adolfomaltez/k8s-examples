@@ -1,3 +1,9 @@
+
+# Example: FRR config for upstream BGP router
+# FRR config for upstream BGP router (all worker nodes)
+
+---
+# FRR config for upstream BGP router
 apiVersion: frrk8s.metallb.io/v1beta1
 kind: FRRConfiguration
 metadata:
@@ -13,8 +19,6 @@ spec:
         toAdvertise:
           allowed:
             mode: all
-      #prefixes:
-      #  - 10.10.235.33/32
   nodeSelector:
     matchLabels:
       node-role.kubernetes.io/worker: "worker"
