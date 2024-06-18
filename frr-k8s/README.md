@@ -1,7 +1,21 @@
+## Clone the vagrant-infrastructure project
+```sh
+git clone https://github.com/adolfomaltez/vagrant-infrastructure
+```
+
 ## Deploy kubernetes on vagrant (3x worker nodes)
+```sh
+cd vagrant-infrastructure/kubernetes-cluster
+vagrant up
+vagrant ssh master
+```
 
 ## Deploy ubuntu router on vagrant
-
+```sh
+cd vagrant-infrastructure/vagrant-ubuntu-router
+vagrant up
+vagrant ssh router
+```
 
 ## Change default gateway on vtysh router
 
