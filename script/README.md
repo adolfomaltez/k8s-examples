@@ -1,6 +1,12 @@
 # Running a shell script inside a pod
 
-## build and load the docker image to kind nodes
+## Create the script
+Important using alpine docker image:
+
+The script needs start with **#!/bin/sh** (instead of #/bin/bash).
+
+
+## Build and load the docker image to kind nodes
 ```sh
 cd script/
 docker build -t adolfomaltez/script .
@@ -11,7 +17,7 @@ docker build -t adolfomaltez/script .
 kind load docker-image adolfomaltez/go-web-app:latest --name cluster
 ```
 
-#Deploy the script pod
+## Deploy the script pod inside the kubernetes cluster
 ```sh
 kubectl apply -f deployment.yaml
 ```
