@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: script
+  namespace: zabbix
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: script
+  template:
+    metadata:
+      labels:
+        name: script
+    spec:
+      containers:
+      - name: script
+        image: adolfomaltez/script
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: cluster
+            value: cluster-zabbix-test # replace with the dowstream cluster variable name
+          - name: token
+            valueFrom:
+              secretKeyRef:
+                name: zabbix-service-account
+                key: token
