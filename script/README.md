@@ -12,7 +12,16 @@ cd script/
 docker build -t adolfomaltez/script .
 ```
 
-# Optional if using kind: Load docker image to nodes
+## Test docker image
+```sh
+docker run --env cluster=foo --env token=ABCDFG adolfomaltez/script
+# Output
+Cluster: foo
+Token: ABCDFG
+```
+
+
+## Optional if using kind: Load docker image to nodes
 ```sh
 kind load docker-image adolfomaltez/go-web-app:latest --name cluster
 ```
