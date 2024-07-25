@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: execute-harvester-yaml
+  namespace: fleet-default
+spec:
+  template:
+    spec:
+      containers:
+      - name: kubectl
+        image: alpine/k8s:1.28.7
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            # Export harvester-01-kubeconfig
+            export KUBECONFIG="/root/.kube/value"
+            # Apply the deployment YAML
+            kubectl apply -f /yamls/namespace.yaml
+            # Apply the service YAML
+            #kubectl apply -f /yamls/service.yaml
+            # Additional commands can be added here
+            echo "All commands executed successfully."
+        volumeMounts:
+        - name: config
+          mountPath: /root/.kube
+        - name: yamls
+          mountPath: /yamls
+      restartPolicy: Never
+      volumes:
+      - name: config
+        secret:
+          secretName: harvester-01-kubeconfig
+      - name: yamls
+        configMap:
+          name: yaml-files
+  backoffLimit: 4
