@@ -1,0 +1,80 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: compositeaccount.composition
+spec:
+  compositeTypeRef:
+    apiVersion: mylab.net/v1alpha1
+    kind: CompositeAccount
+  resources:
+    - name: serviceaccount
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha2
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: "example-serviceaccount"
+                namespace: "example-namespace"
+          providerConfigRef:
+            name: remote-harvester-provider
+      patches:
+        - fromFieldPath: "spec.accountName"
+          toFieldPath: "spec.forProvider.manifest.metadata.name"
+        - fromFieldPath: "spec.namespace"
+          toFieldPath: "spec.forProvider.manifest.metadata.namespace"
+    - name: token
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha2
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: "example-token"
+                annotations:
+                  kubernetes.io/service-account.name: "example-serviceaccount"
+              type: kubernetes.io/service-account-token
+          providerConfigRef:
+            name: remote-harvester-provider
+      patches:
+        - fromFieldPath: "spec.accountName"
+          toFieldPath: "spec.forProvider.manifest.metadata.name"
+        - fromFieldPath: "spec.accountName"
+          toFieldPath: "spec.forProvider.manifest.metadata.annotations['kubernetes.io/service-account.name']"
+        - fromFieldPath: "spec.namespace"
+          toFieldPath: "spec.forProvider.manifest.metadata.namespace"
+    - name: rolebinding
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha2
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: RoleBinding
+              metadata:
+                name: "example-rolebinding"
+              subjects:
+                - kind: ServiceAccount
+                  name: "example-serviceaccount"
+              roleRef:
+                kind: Role
+                name: "example-role"
+                apiGroup: rbac.authorization.k8s.io
+          providerConfigRef:
+            name: remote-harvester-provider
+      patches:
+        - fromFieldPath: "spec.accountName"
+          toFieldPath: "spec.forProvider.manifest.metadata.name"
+        - fromFieldPath: "spec.accountName"
+          toFieldPath: "spec.forProvider.manifest.roleRef.name"
+        - fromFieldPath: "spec.namespace"
+          toFieldPath: "spec.forProvider.manifest.metadata.namespace"
+
+    

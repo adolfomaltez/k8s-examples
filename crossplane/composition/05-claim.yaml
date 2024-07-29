@@ -1,0 +1,8 @@
+apiVersion: mylab.net/v1alpha1
+kind: Account
+metadata:
+  name: cluster-fmaltez-crd-account
+spec:
+  accountName: cluster-fmaltez-crd-account
+  #harvesterCluster: kcinf-hvstr-01
+  namespace: fmaltez-c01-testing

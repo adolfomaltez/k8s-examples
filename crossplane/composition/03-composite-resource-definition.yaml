@@ -1,0 +1,30 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: compositeaccounts.mylab.net
+spec:
+  group: mylab.net
+  names:
+    kind: CompositeAccount
+    plural: compositeaccounts
+  claimNames:
+    kind: Account
+    plural: accounts
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                accountName:
+                  type: string
+                namespace:
+                  type: string
+              required:
+                - accountName
+                - namespace
