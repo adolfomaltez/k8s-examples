@@ -1,0 +1,25 @@
+
+# Example: Antrea config for upstream BGP router
+# Antrea config for upstream BGP router (all worker nodes)
+# https://antrea.io/docs/v2.1.0/docs/bgp-policy/
+
+---
+apiVersion: crd.antrea.io/v1alpha1
+kind: BGPPolicy
+metadata:
+  name: routerupstream
+spec:
+  nodeSelector:
+    matchLabels:
+      #bgp: enabled
+      node-role.kubernetes.io/worker: "worker"
+  localASN: 64520
+  listenPort: 179
+  advertisements:
+    egress: {}
+    service:
+      ipTypes: [LoadBalancerIP, ExternalIP]
+  bgpPeers:
+    - address: 10.63.16.2
+      asn: 64520
+      port: 179
