@@ -1,0 +1,37 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: harvestercloudproviders.k8s.mylab.net
+spec:
+  group: k8s.mylab.net
+  names:
+    kind: HarvesterCloudProvider
+    plural: harvestercloudproviders
+  claimNames:
+    kind: HarvesterCloudProviderClaim
+    plural: harvestercloudproviderclaims
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                id:
+                  type: string
+                #harvesterCluster:
+                #  type: string
+                harvesterNamespace:
+                  type: string
+              required:
+                - id
+                - harvesterNamespace
+            status:
+                type: object
+                properties:
+                  token:
+                    type: string

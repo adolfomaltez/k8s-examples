@@ -1,0 +1,179 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: harvestercloudproviders.k8s.mylab.net
+spec:
+  compositeTypeRef:
+    apiVersion: k8s.mylab.net/v1alpha1
+    kind: HarvesterCloudProvider
+  resources:
+    # serviceAccount
+    - name: serviceaccount
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha2
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: ServiceAccount
+              metadata:
+                name: example-serviceaccount
+                namespace: example-namespace
+          providerConfigRef:
+            name: harvester-01-provider
+      patches:
+        - fromFieldPath: spec.id
+          toFieldPath: spec.forProvider.manifest.metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-serviceaccount"
+        - fromFieldPath: spec.harvesterNamespace
+          toFieldPath: spec.forProvider.manifest.metadata.namespace
+    # token
+    - name: token
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha2
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: example-token
+                namespace: example-namespace
+                annotations:
+                  kubernetes.io/service-account.name: example-serviceaccount
+              type: kubernetes.io/service-account-token
+          providerConfigRef:
+            name: harvester-01-provider
+      patches:
+        - fromFieldPath: spec.id
+          toFieldPath: spec.forProvider.manifest.metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-token"
+        - fromFieldPath: spec.harvesterNamespace
+          toFieldPath: spec.forProvider.manifest.metadata.namespace
+        - fromFieldPath: spec.id
+          toFieldPath: spec.forProvider.manifest.metadata.annotations['kubernetes.io/service-account.name']
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-serviceaccount"
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.manifest.data.token
+          toFieldPath: status.token 
+    # rolebinding
+    - name: rolebinding
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha2
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: rbac.authorization.k8s.io/v1
+              kind: RoleBinding
+              metadata:
+                name: example-rolebinding
+                namespace: example-namespace
+              subjects:
+                - kind: ServiceAccount
+                  name: example-serviceaccount
+              roleRef:
+                kind: ClusterRole
+                name: harvesterhci.io:cloudprovider
+                apiGroup: rbac.authorization.k8s.io 
+          providerConfigRef:
+            name: harvester-01-provider
+      patches:
+        - fromFieldPath: spec.id
+          toFieldPath: spec.forProvider.manifest.metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-rolebinding"       
+        - fromFieldPath: spec.harvesterNamespace
+          toFieldPath: spec.forProvider.manifest.metadata.namespace
+        - fromFieldPath: spec.id
+          toFieldPath: spec.forProvider.manifest.subjects[0].name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-serviceaccount"
+        - fromFieldPath: spec.id
+          toFieldPath: spec.forProvider.manifest.roleRef.name
+          transforms:
+            - type: string
+              string:
+                fmt: "%s-role"
+    # harvesterconfig
+    - name: harvesterconfigsecret
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha2
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Secret
+              type: Opaque
+              metadata:
+                name: harvesterconfigsecret-example
+                namespace: fleet-default
+                annotations:
+                  v2prov-authorized-secret-deletes-on-cluster-removal: 'true'
+                  v2prov-secret-authorized-for-cluster: example-cluster
+              data:
+                credential: credential
+                token: token
+          providerConfigRef:
+            name: rancher-local-provider
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.token
+          toFieldPath: spec.forProvider.manifest.data.token
+        - fromFieldPath: spec.id
+          toFieldPath: spec.forProvider.manifest.metadata.name
+          transforms:
+            - type: string
+              string:
+                fmt: "harvesterconfig-%s"
+        - fromFieldPath: spec.id
+          toFieldPath: spec.forProvider.manifest.metadata.annotations['v2prov-secret-authorized-for-cluster']
+        - type: CombineFromComposite
+          combine:
+            variables:
+              - fromFieldPath: spec.harvesterNamespace
+              - fromFieldPath: status.token
+            strategy: string
+            string:
+              fmt: |
+                apiVersion: v1
+                clusters:
+                - cluster:
+                    certificate-authority-data: ASDFASDFASDFASDF
+                    server: https://192.168.11.12:6443
+                  name: default
+                contexts:
+                - context:
+                    cluster: default
+                    namespace: %s
+                    user: default
+                  name: context-name
+                current-context: context-name
+                kind: Config
+                preferences: {}
+                users:
+                - name: default
+                  user:
+                    token: %s
+          toFieldPath: spec.forProvider.manifest.data.credential
+          transforms:
+            - type: string
+              string:
+                type: Convert
+                convert: ToBase64

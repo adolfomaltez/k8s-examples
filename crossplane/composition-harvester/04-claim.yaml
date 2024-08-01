@@ -1,0 +1,8 @@
+apiVersion: k8s.mylab.net/v1alpha1
+kind: HarvesterCloudProviderClaim
+metadata:
+  name: harvestercloudprovider-cluster-01
+spec:
+  id: cluster-01
+  #harvesterCluster: harvester-01
+  harvesterNamespace: testing-01
