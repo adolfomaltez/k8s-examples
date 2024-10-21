@@ -1,0 +1,1 @@
+Select replica_server_name, endpoint_url, availability_mode_desc from sys.availability_replicas

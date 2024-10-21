@@ -1,0 +1,48 @@
+# PVC 1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mssql-primary
+  labels:
+    app: mssql
+spec:
+  storageClassName: harvester
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+
+# PVC 2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mssql-secondary1
+  labels:
+    app: mssql
+spec:
+  storageClassName: harvester
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+
+# PVC 3
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mssql-secondary2
+  labels:
+    app: mssql
+spec:
+  storageClassName: harvester
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+
