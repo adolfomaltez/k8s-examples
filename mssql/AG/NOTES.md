@@ -6,14 +6,15 @@ kubectl create namespace mssql
 ```
 ## Create secret
 ```sh
-kubectl create secret generic mssql --from-literal=MSSQL_SA_PASSWORD="p@ssword1!" -n mssql
+export MSSQL_SA_PASSWORD=p@ssword1!
+kubectl create secret generic mssql-secret --from-literal=MSSQL_SA_PASSWORD="$MSSQL_SA_PASSWORD" -n mssql
 ```
 
 ## Deploy on k8s
 
 ### Create PVCs
 ```sh
-kubectl apply -f 01-PVCs.yaml
+kubectl -n mssql apply -f 01-PVCs.yaml
 ```
 
 ### Deploy MSSQL instances
@@ -25,51 +26,52 @@ kubectl -n mssql apply -f 04-mssql-secondary2.yaml
 ### Verify pods and get pod's name
 ```sh
 kubectl -n mssql get pods
-podagp=$(kubectl get pods -l app=mssql-primary -o json | jq -r '.items[0].metadata.name')
-podags1=$(kubectl get pods -l app=mssql-secondary1 -o json | jq -r '.items[0].metadata.name')
-podags2=$(kubectl get pods -l app=mssql-secondary2 -o json | jq -r '.items[0].metadata.name')
+podagp=$(kubectl -n mssql get pods -l app=mssql-primary -o json | jq -r '.items[0].metadata.name')
+podags1=$(kubectl -n mssql get pods -l app=mssql-secondary1 -o json | jq -r '.items[0].metadata.name')
+podags2=$(kubectl -n mssql get pods -l app=mssql-secondary2 -o json | jq -r '.items[0].metadata.name')
 ```
 
 ## Create AG
 ```sh
-cat AG1-Primary-CreateandAdd.sql | kubectl exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "p@ssword1!"'
+cat AG1-Primary-CreateandAdd.sql | kubectl -n mssql exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 ```
 
 ### Create certificate and copy to secondary nodes
 ```sh
 PathToCopyCert=${podagp}":var/opt/mssql/ag_certificate.cert"
 PathToCopyCertKey=${podagp}":var/opt/mssql/ag_certificate.key"
-kubectl cp $PathToCopyCert ag_certificate.cert
-kubectl cp $PathToCopyCertKey ag_certificate.key
-kubectl cp ag_certificate.cert  $podags1:var/opt/mssql
-kubectl cp ag_certificate.key  $podags1:var/opt/mssql
-kubectl cp ag_certificate.cert $podags2:var/opt/mssql
-kubectl cp ag_certificate.key $podags2:var/opt/mssql
+kubectl -n mssql cp $PathToCopyCert ag_certificate.cert
+kubectl -n mssql cp $PathToCopyCertKey ag_certificate.key
+kubectl -n mssql cp ag_certificate.cert  $podags1:var/opt/mssql
+kubectl -n mssql cp ag_certificate.key  $podags1:var/opt/mssql
+kubectl -n mssql cp ag_certificate.cert $podags2:var/opt/mssql
+kubectl -n mssql cp ag_certificate.key $podags2:var/opt/mssql
 ```
+
 ### Create and Add secondary nodes to AG
 ```sh
-cat AG2-Secondary-CreateandAdd.sql | kubectl exec -it $podags1 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "p@ssword1!"'
-cat AG3-Secondary-CreateandAdd.sql | kubectl exec -it $podags2 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "p@ssword1!"'
+cat AG2-Secondary-CreateandAdd.sql | kubectl -n mssql exec -it $podags1 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
+cat AG3-Secondary-CreateandAdd.sql | kubectl -n mssql exec -it $podags2 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 ```
 
 
-### 
+###
 ```sh
-cat AG4-Primary--Collect.sql | kubectl exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "p@ssword1!"'
-cat AG5-Primary--Queryreplicas.sql | kubectl exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "p@ssword1!"'
-cat AG6-Primary--CreateData.sql | kubectl exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "p@ssword1!"'
+cat AG4-Primary--Collect.sql       | kubectl -n mssql exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
+cat AG5-Primary--Queryreplicas.sql | kubectl -n mssql exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
+cat AG6-Primary--CreateData.sql    | kubectl -n mssql exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 ```
 
 ## Test on sqlcmd cli on pods
 ```sh
 # Primary
-kubectl exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "p@ssword1!"'
+kubectl exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 
 # Secondary 1
-kubectl exec -it $podags1 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "p@ssword1!"'
+kubectl exec -it $podags1 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 
 # Secondary 2
-kubectl exec -it $podags2 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "p@ssword1!"'
+kubectl exec -it $podags2 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 
 ```
 
