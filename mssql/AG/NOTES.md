@@ -55,24 +55,35 @@ cat AG3-Secondary-CreateandAdd.sql | kubectl -n mssql exec -it $podags2 -- /bin/
 ```
 
 
-###
+### Load Test Data
 ```sh
 cat AG4-Primary--Collect.sql       | kubectl -n mssql exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 cat AG5-Primary--Queryreplicas.sql | kubectl -n mssql exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 cat AG6-Primary--CreateData.sql    | kubectl -n mssql exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 ```
 
+### Verify data on all nodes
+```sh
+for pod in $podagp $podags1 $podags2;
+  do echo Records on table AG_Test on DB SQLTestAG from pod: $pod;
+  cat AG7-All--CountRows.sql   | kubectl -n mssql exec -it $pod -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"';
+  echo "-----%<------%<--------%<--------";
+done
+```
+
+
+
+
 ## Test on sqlcmd cli on pods
 ```sh
 # Primary
-kubectl exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
+kubectl -n mssql exec -it $podagp -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 
 # Secondary 1
-kubectl exec -it $podags1 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
+kubectl -n mmsql exec -it $podags1 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 
 # Secondary 2
-kubectl exec -it $podags2 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
-
+kubectl -n mssql exec -it $podags2 -- /bin/bash -c '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P "$MSSQL_SA_PASSWORD"'
 ```
 
 # References
