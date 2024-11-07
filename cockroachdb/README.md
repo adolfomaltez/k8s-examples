@@ -1,7 +1,5 @@
 # Installing cockroachdb example
 
-- https://www.cockroachlabs.com/docs/v23.2/deploy-cockroachdb-with-kubernetes-insecure?filters=helm\
-
 
 ## Install using helm
 ```sh
@@ -57,9 +55,11 @@ root@cockroachdb-public.default:26257/defaultdb>
 
 > CREATE DATABASE bank;
 
+> \c bank
+
 > CREATE TABLE bank.accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      balance DECIMAL
+    balance DECIMAL
   );
 
 > INSERT INTO bank.accounts (balance)
@@ -69,6 +69,16 @@ root@cockroachdb-public.default:26257/defaultdb>
 > SELECT * FROM bank.accounts;
 
 > \q
+```
+
+
+## Scale from 3 to 4 nodes
+```sh
+helm upgrade \
+  cockroachdb \
+  cockroachdb/cockroachdb \
+  --set statefulset.replicas=4 \
+  --reuse-values
 ```
 
 ## Simulate node failure
@@ -81,3 +91,9 @@ kubectl get pods
 ```sh
 helm uninstall cockroachdb
 ```
+
+
+# Rerefences
+- https://www.cockroachlabs.com/docs/stable/deploy-cockroachdb-with-kubernetes
+- https://www.cockroachlabs.com/docs/v24.2/deploy-cockroachdb-with-kubernetes-insecure?filters=helm
+- https://www.cockroachlabs.com/docs/v24.2/scale-cockroachdb-kubernetes?filters=helm
